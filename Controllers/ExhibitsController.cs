@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DM.Data.Entity;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using DM.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DM.Controllers
 {
@@ -18,19 +22,8 @@ namespace DM.Controllers
             _context = context;
         }
 
-        // GET: Exhibits
-        /*public async Task<IActionResult> Index(string search, bool notUsed)
-        {
-            var exhibits = from e in _context.Exhibits
-                           select e;
-            if (!String.IsNullOrEmpty(search))
-            {
-                exhibits = exhibits.Where(s => s.Name.Contains(search));
-            }
-            return View(await exhibits.ToListAsync());
-        }
-        */
 
+        [Authorize]
         public async Task<IActionResult> Index(string ExhibitEra, string searchString)
         {
             // Use LINQ to get list of genres.
@@ -67,6 +60,7 @@ namespace DM.Controllers
         */
 
         // GET: Exhibits/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -82,9 +76,11 @@ namespace DM.Controllers
             }
 
             return View(exhibit);
+
         }
 
         // GET: Exhibits/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
@@ -94,11 +90,21 @@ namespace DM.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Century,Era,Place,Cost,Discription,Image")] Exhibit exhibit)
+        public async Task<IActionResult> Create([Bind("Id,Name,Century,Era,Place,Cost,Discription, Image")] Exhibit exhibit, IFormFile uploadimage)
         {
-            if (ModelState.IsValid)
+            if (ModelState.IsValid && uploadimage != null)
             {
+                
+                byte[] imageData = null;
+                // считываем переданный файл в массив байтов
+                using (var binaryReader = new BinaryReader(uploadimage.OpenReadStream()))
+                {
+                    imageData = binaryReader.ReadBytes((int)uploadimage.Length);
+                }
+                // установка массива байтов
+                exhibit.Image = imageData;
                 _context.Add(exhibit);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -107,6 +113,7 @@ namespace DM.Controllers
         }
 
         // GET: Exhibits/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -126,8 +133,9 @@ namespace DM.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Century,Era,Place,Cost,Discription,Image")] Exhibit exhibit)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Century,Era,Place,Cost,Discription,Image")] Exhibit exhibit, IFormFile uploadimage)
         {
             if (id != exhibit.Id)
             {
@@ -137,7 +145,18 @@ namespace DM.Controllers
             if (ModelState.IsValid)
             {
                 try
-                {
+                { 
+                    if (uploadimage != null)
+                    {
+                        byte[] imageData = null;
+                        // считываем переданный файл в массив байтов
+                        using (var binaryReader = new BinaryReader(uploadimage.OpenReadStream()))
+                        {
+                            imageData = binaryReader.ReadBytes((int)uploadimage.Length);
+                        }
+                        // установка массива байтов
+                        exhibit.Image = imageData;
+                    }
                     _context.Update(exhibit);
                     await _context.SaveChangesAsync();
                 }
@@ -158,6 +177,7 @@ namespace DM.Controllers
         }
 
         // GET: Exhibits/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
