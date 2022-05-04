@@ -22,7 +22,7 @@ namespace DM.Data.Entity
         public string Place { get; set; }
         [Display(Name = "Стоимость")]
         [DataType(DataType.Currency)]
-        [Range(1, Int32.MaxValue)]
+        [Range(0, Int32.MaxValue)]
         public int Cost { get; set; }
         [Display(Name = "Краткое описание")]
         [StringLength(120, MinimumLength = 10)]
